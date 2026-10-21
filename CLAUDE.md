@@ -2,16 +2,15 @@
 
 Mutual (pari-mutuel) bets created by members among themselves, staked with **virtual tokens** (whole
 numbers, no real money). The domain was discovered in an Event Storming workshop:
-`workspace/event-storming.md` (events, policies, read models, open hot spots) and
-`workspace/event-storming-context-map.excalidraw`. Read it when a task needs business detail; business
-rules themselves live in the tests, not here.
+`workspace/event-storming.md` (events, policies, read models, open hot spots). Read it when a task needs
+business detail; business rules themselves live in the tests, not here.
 
 ## Bounded contexts
 
 | Context | Owns (aggregates) | « utilisateur » means | Role |
 |---|---|---|---|
-| `members` | `Member` (account + token balance, token history) | an application account | **upstream** |
-| `betting` | `Bet` (outcomes, invitations, settlement), `Stake` (made by `Bet`) | creator, invitee, bettor | **downstream** |
+| `members` | `Member` (registration, confirmed email, login) | an application account | **upstream** |
+| `betting` | `Player` (spendable token balance, token history, refills), `Bet` (outcomes, invitations, settlement), `Stake` (made by `Bet`) | a player: creator, invitee, bettor | **downstream** |
 
 - Contexts never import each other: no Maven dependency, no shared class, no shared table.
 - **Reads may be synchronous**: a client composes its screens by querying each context's read side
@@ -19,14 +18,14 @@ rules themselves live in the tests, not here.
   its own decisions is decided at the first test that needs it, then written here.
 - **Changes go through published events**: a change in one context that must change another one is
   never a synchronous call.
-- Cross-context events: `members` → `betting`: email confirmed, tokens debited for a stake.
-  `betting` → `members`: stake refused, bet settled (payouts + burnt amount), bet cancelled.
-- No published event may be lost (outbox on the publishing side); consumers are idempotent — a payout is
-  applied once per (member, bet, reason).
-- Possible later split of `betting` (bet/outcomes vs stakes) is noted in the workshop summary, not decided.
-- **Open before the stake feature**: who owns the token balance. Today `members` does, so staking is a
-  cross-context saga; moving the balance to `betting` would make staking and settlement local. To be
-  decided in a design-level workshop.
+- Cross-context events: `members` → `betting`: **email confirmed** only. `betting` reacts by creating the
+  `Player` and crediting the welcome tokens. Nothing flows from `betting` to `members`.
+- No published event may be lost (outbox on the publishing side); consumers are idempotent — a member's
+  `Player` is created once.
+- Tokens live in `betting` only: staking, refills and settlement are local to the context (decided after
+  the workshop, see the revision in `workspace/event-storming.md`).
+- Possible later split of `betting` (bet/outcomes vs stakes) is noted in the workshop summary, not decided;
+  the player's balance would go with the stakes.
 
 ## Ubiquitous language (code names)
 
@@ -35,6 +34,7 @@ Production code is in English; French is the business vocabulary of the workshop
 | Français | Code | Français | Code |
 |---|---|---|---|
 | membre / compte | `Member` | pari | `Bet` |
+| joueur (créateur, invité, parieur) | `Player` | | |
 | solde, jetons | `Balance`, `Tokens` | issue | `Outcome` |
 | recharge (plancher mensuel) | `Refill` | mise | `Stake` |
 | versement (gains, commission, restitution) | `Payout`, `PayoutReason` | invitation | `Invitation` |
@@ -77,8 +77,10 @@ configuration/                             composition root of the side
   when the context gets its first business class.
 - **Time is a port.** Domain and use cases get the time from a clock port with a deterministic fake.
 - **Aggregates are small and reference each other by id.** One aggregate written per transaction;
-  anything spanning two aggregates is a policy reacting to an event (e.g. the stake saga: debit tokens →
-  `Bet` makes the `Stake` or refuses it → re-credit).
+  anything spanning two aggregates is a policy reacting to an event. **One assumed exception: placing a
+  stake** debits the `Player` and inserts the `Stake` in one local transaction, so the bettor gets an
+  immediate answer; only the player's balance is locked, the `Bet` is not modified. Crediting the players
+  at settlement (one transaction, or one per player) is decided with the settlement feature.
 - **`Bet` is the factory of `Stake`**: `Stake`'s constructor is package-private; placing a stake reads
   the bet and inserts the stake, the bet is not modified.
 - **Snapshots.** An aggregate exposes no getters. It exports its state with `toSnapshot()` (records of

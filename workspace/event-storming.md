@@ -31,6 +31,35 @@ Guided (mode guidé). Atelier mené en français, parti de zéro, sans aucun bou
 - **Règlement entre contextes** : nouveau fait **« Pari réglé »**, publié par betting après la déclaration du résultat. Il porte la liste des versements (bénéficiaire, montant, motif : gains, commission ou restitution) et le montant détruit. members le traite et crédite les soldes ; le traitement est **idempotent** (identifiant du pari) et **aucun événement ne doit être perdu**.
 - **Hors V1** : taxe sur les jetons inactifs.
 
+## Révision du 2026-10-21 : le solde passe dans betting
+
+Décidée après l'atelier. Elle **prime** sur les sections qui suivent quand elles se contredisent ;
+celles-ci restent telles que l'atelier les a produites.
+
+**Constat** : miser, l'action la plus fréquente, traversait deux contextes (débit dans members, mise dans
+betting), d'où une saga asynchrone (débit → mise placée ou refusée → recrédit) et une réponse différée
+au parieur. Les jetons ne servent qu'au jeu : members n'en a pas besoin pour gérer un compte.
+
+**Décision**
+- **members** = l'identité : inscription, email confirmé, connexion. Agrégat Membre, **sans solde**.
+- **betting** = le jeu. Nouvel agrégat **Joueur** (`Player`) : solde dépensable, historique des jetons,
+  recharges. Tout membre confirmé a un Joueur ; créateur, invité et parieur sont des rôles du Joueur.
+- **Seul fait entre contextes** : *Email confirmé* (members → betting). betting y réagit en créant le
+  Joueur et en créditant les jetons de bienvenue (PO1, désormais dans betting). Le fait ne doit pas être
+  perdu ; le consommateur est idempotent (un Joueur par membre).
+- **Miser** est synchrone : une **transaction locale** vérifie les règles du Pari (qui fabrique la Mise
+  sans être modifié), débite le Joueur et enregistre la Mise. C'est une exception assumée à « un agrégat
+  modifié par transaction » : réponse immédiate au parieur, seul le solde du Joueur est verrouillé.
+- **Disparaissent** : « Jetons débités pour une mise », « Mise refusée » (un refus est désormais une
+  erreur renvoyée au parieur, sans fait publié), « Jetons recrédités » après un refus, PO9 et PO10.
+- **Deviennent internes à betting** : « Jetons de bienvenue crédités » et « Jetons rechargés » (PO2), le
+  règlement (« Pari réglé » et PO14 ne traversent plus de frontière ; l'idempotence d'un versement par
+  joueur, pari et motif reste une règle du Joueur), les restitutions à l'annulation (PO6), le read model
+  R8 (solde et historique).
+- **À trancher avec le règlement** : créditer les joueurs en une transaction, ou une par joueur via un
+  fait interne.
+- **Évolution envisagée** : si betting est un jour découpé, le Joueur ira avec la zone « mises ».
+
 ## Domain Events [ORANGE] — 21 faits
 
 ### Phase 1 : Entrée (de l'inscription à l'email confirmé)

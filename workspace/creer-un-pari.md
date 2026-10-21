@@ -7,8 +7,9 @@ l'atelier BDD, qui doit en tirer des règles précises et des exemples chiffrés
 ## Contexte
 
 - **Bounded context** : `betting` (en aval de `members`).
-- **Acteur** : le créateur, un membre dont l'email est confirmé. Il n'existe qu'un seul type de membre,
-  qui peut tour à tour être créateur, invité ou parieur. Il n'y a pas d'administrateur en V1.
+- **Acteur** : le créateur, un joueur (`Player`), c'est-à-dire un membre dont l'email est confirmé. Il
+  n'existe qu'un seul type de joueur, qui peut tour à tour être créateur, invité ou parieur. Il n'y a pas
+  d'administrateur en V1.
 - **Commande** : Créer un pari (issues, date de clôture, commission, liste d'accès éventuelle).
 - **Fait produit** : **Pari créé** ★ (pivot qui ouvre la phase « Prise de mises »).
 - **Agrégat** : Pari, qui porte ses invitations et fabrique les mises.
@@ -28,8 +29,9 @@ l'atelier BDD, qui doit en tirer des règles précises et des exemples chiffrés
   - seule exception, la clôture anticipée par le créateur, qui reste toujours possible.
 - **Pari sans liste** : il est ouvert à tous. **Pari avec liste** : seuls les invités qui ont accepté
   peuvent miser.
-- On n'invite que des membres dont l'email est confirmé. L'email confirmé est requis pour **toute**
-  action, création comprise.
+- On n'invite que des joueurs. L'email confirmé est requis pour **toute** action, création comprise :
+  dans `betting`, un membre n'existe comme joueur qu'une fois son email confirmé (le fait *Email
+  confirmé* crée le `Player` et lui crédite ses jetons de bienvenue).
 - Le créateur ne mise pas sur son propre pari (sujet hors de la création, mais lié au créateur).
 - Le créateur déclarera lui-même le résultat, après la clôture. La V1 repose sur la confiance, sans
   contestation possible.
@@ -41,7 +43,7 @@ l'atelier BDD, qui doit en tirer des règles précises et des exemples chiffrés
 
 - **Parieur, avant de miser** : le détail du pari (issues, date de clôture, commission, totaux misés
   par issue).
-- **Membre** : la liste des paris ouverts à tous, plus ceux dont il a accepté l'invitation.
+- **Joueur** : la liste des paris ouverts à tous, plus ceux dont il a accepté l'invitation.
 - **Créateur** : ses paris dont la date de clôture n'est pas passée (pour annuler ou clôturer par
   anticipation).
 
@@ -65,15 +67,15 @@ l'atelier BDD, qui doit en tirer des règles précises et des exemples chiffrés
 5. **Contenu du pari** : un titre, une description ou l'événement réel concerné sont-ils nécessaires ?
 6. **Créateur** : y a-t-il une limite au nombre de paris ouverts par créateur ? La création coûte-t-elle
    des jetons ?
-7. **Email non confirmé** : un membre non confirmé peut-il seulement se connecter ? Si la connexion
-   l'exige, tout créateur est confirmé et `betting` n'a rien à vérifier à la création. Sinon, que voit
-   ce membre quand il tente de créer un pari ?
+7. **Créateur qui n'est pas (encore) joueur** : un membre dont l'email n'est pas confirmé, ou dont le
+   `Player` n'est pas encore créé (le fait *Email confirmé* arrive avec un léger délai), tente de créer
+   un pari. Que voit-il ? Et un membre non confirmé peut-il seulement se connecter ?
 
 ## Hors périmètre de cette fonctionnalité
 
-- Invitations : envoi, réponses et retraits. C'est là que `betting` devra savoir quels membres sont
-  confirmés, via sa copie alimentée par le fait *Email confirmé*.
-- Mises et saga de débit.
+- Invitations : envoi, réponses et retraits. Un invité doit être un joueur, ce que `betting` sait sans
+  interroger `members`.
+- Mises (le débit du joueur et l'enregistrement de la mise, dans une même transaction).
 - Clôture anticipée.
 - Résultat, règlement et annulation.
 - Hot spot H4 (erreur sur la date de clôture remarquée après la clôture) : il touche la date fixée à
