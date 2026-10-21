@@ -60,6 +60,16 @@ au parieur. Les jetons ne servent qu'au jeu : members n'en a pas besoin pour gé
   fait interne.
 - **Évolution envisagée** : si betting est un jour découpé, le Joueur ira avec la zone « mises ».
 
+**Décisions de l'atelier BDD « Créer un pari »** (détail dans `creer-un-pari-spec-by-example.md`)
+- **Clôture anticipée généralisée** : le créateur peut seulement **avancer** la date de clôture, vers un
+  instant entre maintenant et la clôture actuelle, jamais la reculer. Si l'événement réel est reporté,
+  il laisse les mises scellées et attend pour déclarer le résultat, ou il annule le pari. Remplace la
+  commande « Clôturer par anticipation » ; H4 (erreur remarquée après la clôture) reste sans recours,
+  volontairement : un pari clos ne rouvre jamais.
+- **Pas de mode d'accès** : un pari est privé si sa liste d'invités est non vide à la création, et il le
+  reste même si tous ses invités sont retirés ensuite.
+- « Utilisateur invité au pari » devient **« Joueur invité au pari »**.
+
 ## Domain Events [ORANGE] — 21 faits
 
 ### Phase 1 : Entrée (de l'inscription à l'email confirmé)
