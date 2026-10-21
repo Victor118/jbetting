@@ -13,13 +13,20 @@ rules themselves live in the tests, not here.
 | `members` | `Member` (account + token balance, token history) | an application account | **upstream** |
 | `betting` | `Bet` (outcomes, invitations, settlement), `Stake` (made by `Bet`) | creator, invitee, bettor | **downstream** |
 
-- Contexts never import each other: no Maven dependency, no shared class, no shared table. They exchange
-  **published events** only, never a synchronous call.
+- Contexts never import each other: no Maven dependency, no shared class, no shared table.
+- **Reads may be synchronous**: a client composes its screens by querying each context's read side
+  directly (e.g. the members to invite come from `members`). How a context would read another one for
+  its own decisions is decided at the first test that needs it, then written here.
+- **Changes go through published events**: a change in one context that must change another one is
+  never a synchronous call.
 - Cross-context events: `members` → `betting`: email confirmed, tokens debited for a stake.
   `betting` → `members`: stake refused, bet settled (payouts + burnt amount), bet cancelled.
 - No published event may be lost (outbox on the publishing side); consumers are idempotent — a payout is
   applied once per (member, bet, reason).
 - Possible later split of `betting` (bet/outcomes vs stakes) is noted in the workshop summary, not decided.
+- **Open before the stake feature**: who owns the token balance. Today `members` does, so staking is a
+  cross-context saga; moving the balance to `betting` would make staking and settlement local. To be
+  decided in a design-level workshop.
 
 ## Ubiquitous language (code names)
 
