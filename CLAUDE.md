@@ -29,12 +29,13 @@ business detail; business rules themselves live in the tests, not here.
 
 ## Ubiquitous language (code names)
 
-Production code is in English; French is the business vocabulary of the workshop and of test names.
+Code (production and tests) is in English; French is the business vocabulary of the workshops and of
+the specifications in `workspace/`. This table is the translation between the two.
 
 | Français | Code | Français | Code |
 |---|---|---|---|
 | membre / compte | `Member` | pari | `Bet` |
-| joueur (créateur, invité, parieur) | `Player` | | |
+| joueur (créateur, invité, parieur) | `Player` | cagnotte | `Pot` |
 | solde, jetons | `Balance`, `Tokens` | issue | `Outcome` |
 | recharge (plancher mensuel) | `Refill` | mise | `Stake` |
 | versement (gains, commission, restitution) | `Payout`, `PayoutReason` | invitation | `Invitation` |
@@ -103,8 +104,11 @@ boundedcontexts/<context>/src/test/java/com/jbetting/<context>/
 - Under each level, test classes mirror the production package they drive, side included
   (`unit/write/businesslogic/usecases/staking/PlaceStakeCommandHandlerTest`).
 - Any other file name **never runs**. `./mvnw test` skips integration and e2e: use `./mvnw verify`.
-- Test methods in short French, `devrait_[résultat]`, `_quand_[condition]` only when needed; helpers in
-  French; production code in English.
+- Test methods in short English snake_case, `should_[outcome]`, `_when_[condition]` only when the
+  outcome alone does not tell two tests apart (e.g. `should_create_the_bet`,
+  `should_refuse_the_creation_when_the_creator_is_not_a_player`); helpers in English camelCase.
+- Specifications (`workspace/*-spec-by-example.md`) stay in French; tests translate them with the
+  ubiquitous-language table.
 - Docker is required for integration and e2e tests (Testcontainers, `postgres:17-alpine`).
 
 ## Commands
