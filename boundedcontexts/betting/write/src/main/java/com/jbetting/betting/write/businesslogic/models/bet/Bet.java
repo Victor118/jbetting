@@ -4,4 +4,10 @@ import java.time.Instant;
 import java.util.List;
 
 public record Bet(String betId, String creatorId, String title, List<String> outcomes, String description, Instant closesAt) {
+
+    public Bet {
+        if (title.isEmpty()) {
+            throw new IllegalArgumentException("title required");
+        }
+    }
 }
