@@ -16,5 +16,8 @@ public record Bet(String betId, String creatorId, String title, List<String> out
         if (outcomes.size() < MIN_OUTCOME_COUNT || outcomes.size() > MAX_OUTCOME_COUNT) {
             throw new IllegalArgumentException("invalid number of outcomes");
         }
+        if (outcomes.stream().anyMatch(String::isBlank)) {
+            throw new IllegalArgumentException("outcome label required");
+        }
     }
 }

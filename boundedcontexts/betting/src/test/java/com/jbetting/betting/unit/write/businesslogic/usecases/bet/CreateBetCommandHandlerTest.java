@@ -61,6 +61,11 @@ public class CreateBetCommandHandlerTest {
         var command = givenCreateBetCommandWithOutcomes(outcomes);
         assertThatThrownBy(() -> handler.handle(command)).isInstanceOf(IllegalArgumentException.class).hasMessage("invalid number of outcomes");
     }
+    @Test
+    void should_refuse_the_creation_when_an_outcome_is_blank(){
+        var command = givenCreateBetCommandWithOutcomes(List.of("yes","   "));
+        assertThatThrownBy(() -> handler.handle(command)).isInstanceOf(IllegalArgumentException.class).hasMessage("outcome label required");
+    }
 
     private static CreateBetCommand givenCreateBetCommandWithTitle(String title) {
 
