@@ -5,14 +5,16 @@ import com.jbetting.betting.write.adapters.secondary.persistence.fakes.FakeBetRe
 import com.jbetting.betting.write.businesslogic.models.bet.Bet;
 import com.jbetting.betting.write.businesslogic.usecases.bet.CreateBetCommand;
 import com.jbetting.betting.write.businesslogic.usecases.bet.CreateBetCommandHandler;
-import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -43,20 +45,20 @@ public class CreateBetCommandHandlerTest {
         assertThat(bet).contains(new Bet(BET_ID, ALICE_EMAIL, SIMPLE_TITLE, SIMPLE_OUTCOMES, SIMPLE_DESCRIPTION, SIMPLE_CLOSES_AT));
 
     }
-    
+
 
     @ParameterizedTest
-    @ValueSource(strings = {"","   "})
-    void should_refuse_the_creation_when_the_title_is_b(String title ) {
+    @ValueSource(strings = {"", "   "})
+    void should_refuse_the_creation_when_the_title_is_blank(String title) {
 
         CreateBetCommand command = givenCreateBetCommandWithTitle(title);
         assertThatThrownBy(() -> handler.handle(command)).isInstanceOf(IllegalArgumentException.class).hasMessage("title required");
     }
 
-    @Test
-    void should_refuse_the_creation_when_only_one_outcome() {
-
-        CreateBetCommand command = givenCreateBetCommandWithOutcomes(List.of("Yes"));
+    @ParameterizedTest
+    @MethodSource("invalidOutcomes")
+    void should_refuse_the_creation_when_the_number_of_outcomes_is_invalid(List<String> outcomes) {
+        var command = givenCreateBetCommandWithOutcomes(outcomes);
         assertThatThrownBy(() -> handler.handle(command)).isInstanceOf(IllegalArgumentException.class).hasMessage("invalid number of outcomes");
     }
 
@@ -71,7 +73,15 @@ public class CreateBetCommandHandlerTest {
     }
 
     private static CreateBetCommand givenASimpleCreateBetCommand() {
-        return new CreateBetCommand(BET_ID,ALICE_EMAIL,SIMPLE_TITLE, SIMPLE_OUTCOMES,SIMPLE_DESCRIPTION, SIMPLE_CLOSES_AT);
+        return new CreateBetCommand(BET_ID, ALICE_EMAIL, SIMPLE_TITLE, SIMPLE_OUTCOMES, SIMPLE_DESCRIPTION, SIMPLE_CLOSES_AT);
+    }
+
+    static Stream<List<String>> invalidOutcomes(){
+        var outcomes101 = IntStream.rangeClosed(1, 101).mapToObj(i -> "issue" + i).toList();
+        return Stream.of(
+                List.of("yes"),
+                outcomes101
+        );
     }
 
 
