@@ -1,9 +1,8 @@
 package com.jbetting.betting.write.businesslogic.models.bet;
 
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Locale;
 
 public record Bet(String betId, String creatorId, Title title, List<String> outcomes, String description,
                   Instant closesAt) {
@@ -18,7 +17,7 @@ public record Bet(String betId, String creatorId, Title title, List<String> outc
         if (outcomes.stream().anyMatch(String::isBlank)) {
             throw new IllegalArgumentException("outcome label required");
         }
-        if (outcomes.stream().distinct().count() != outcomes.size()) {
+        if (outcomes.stream().map((s) -> s.toLowerCase(Locale.ROOT)).distinct().count() != outcomes.size()) {
             throw new IllegalArgumentException("duplicated outcomes");
         }
     }
