@@ -3,6 +3,7 @@ package com.jbetting.betting.unit.write.businesslogic.usecases.bet;
 
 import com.jbetting.betting.write.adapters.secondary.persistence.fakes.FakeBetRepository;
 import com.jbetting.betting.write.businesslogic.models.bet.Bet;
+import com.jbetting.betting.write.businesslogic.models.bet.Title;
 import com.jbetting.betting.write.businesslogic.usecases.bet.CreateBetCommand;
 import com.jbetting.betting.write.businesslogic.usecases.bet.CreateBetCommandHandler;
 import org.junit.jupiter.api.Test;
@@ -42,7 +43,7 @@ public class CreateBetCommandHandlerTest {
         handler.handle(command);
         //then
         Optional<Bet> bet = betRepository.findById(BET_ID);
-        assertThat(bet).contains(new Bet(BET_ID, ALICE_EMAIL, SIMPLE_TITLE, SIMPLE_OUTCOMES, SIMPLE_DESCRIPTION, SIMPLE_CLOSES_AT));
+        assertThat(bet).contains(new Bet(BET_ID, ALICE_EMAIL, new Title(SIMPLE_TITLE), SIMPLE_OUTCOMES, SIMPLE_DESCRIPTION, SIMPLE_CLOSES_AT));
 
     }
 
