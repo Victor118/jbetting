@@ -66,6 +66,11 @@ public class CreateBetCommandHandlerTest {
         var command = givenCreateBetCommandWithOutcomes(List.of("yes","   "));
         assertThatThrownBy(() -> handler.handle(command)).isInstanceOf(IllegalArgumentException.class).hasMessage("outcome label required");
     }
+    @Test
+    void should_refuse_the_creation_when_outcomes_are_duplicated(){
+        var command = givenCreateBetCommandWithOutcomes(List.of("Lyon","Lyon"));
+        assertThatThrownBy(() -> handler.handle(command)).isInstanceOf(IllegalArgumentException.class).hasMessage("duplicated outcomes");
+    }
 
     private static CreateBetCommand givenCreateBetCommandWithTitle(String title) {
 
